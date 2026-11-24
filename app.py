@@ -633,15 +633,12 @@ def render_sidebar():
 
         st.markdown("<div style='font-family: JetBrains Mono; font-size: 0.72rem; font-weight: 600; color: #159A91; text-transform: uppercase; margin-bottom: 6px;'>NAVIGATION</div>", unsafe_allow_html=True)
 
-        target_idx = WORKSPACE_PAGES.index(cur)
-
         def _on_sidebar_radio_change():
             st.session_state["current_page"] = st.session_state["sidebar_workspace_radio"]
 
         st.radio(
             "Navigation",
             WORKSPACE_PAGES,
-            index=target_idx,
             label_visibility="collapsed",
             key="sidebar_workspace_radio",
             on_change=_on_sidebar_radio_change

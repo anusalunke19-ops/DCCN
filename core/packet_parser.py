@@ -397,7 +397,8 @@ def _parse_application_layer(packet, result: dict) -> None:
 
         # Parse the question section (what was asked)
         try:
-            qd = dns.qd
+            qd_field = getattr(dns, "qd", None)
+            qd = qd_field[0] if (qd_field is not None and hasattr(qd_field, "__getitem__") and len(qd_field) > 0) else qd_field
             if qd is not None:
                 qname_raw = _safe(qd, "qname")
                 # qname comes as bytes like b'example.com.' — decode it
@@ -416,19 +417,23 @@ def _parse_application_layer(packet, result: dict) -> None:
         if result["dns_qr"] == 1:
             try:
                 answers = []
-                an = dns.an
-                while an and hasattr(an, "rrname"):
-                    ans_dict = {
-                        "name": _decode_dns_name(_safe(an, "rrname")),
-                        "type": _dns_qtype_name(_safe(an, "type")),
-                        "ttl": _safe(an, "ttl"),
-                        "rdata": _safe(an, "rdata"),
-                    }
-                    answers.append(ans_dict)
-                    payload = getattr(an, "payload", None)
-                    if not payload or not hasattr(payload, "rrname"):
-                        break
-                    an = payload
+                an_field = getattr(dns, "an", None)
+                if an_field:
+                    records = list(an_field) if hasattr(an_field, "__iter__") else [an_field]
+                    for an in records:
+                        curr = an
+                        while curr and hasattr(curr, "rrname"):
+                            ans_dict = {
+                                "name": _decode_dns_name(_safe(curr, "rrname")),
+                                "type": _dns_qtype_name(_safe(curr, "type")),
+                                "ttl": _safe(curr, "ttl"),
+                                "rdata": _safe(curr, "rdata"),
+                            }
+                            answers.append(ans_dict)
+                            payload = getattr(curr, "payload", None)
+                            if not payload or not hasattr(payload, "rrname") or payload in records:
+                                break
+                            curr = payload
                 result["dns_answers"] = answers if answers else None
                 if result["dns_ancount"] is None and answers:
                     result["dns_ancount"] = len(answers)
@@ -859,9 +864,11 @@ def get_packet_layers(packet) -> list[dict]:
         qtype = None
         qname = None
         try:
-            if dns.qd:
-                qtype = _dns_qtype_name(_safe(dns.qd, "qtype"))
-                qname_raw = _safe(dns.qd, "qname")
+            qd_field = getattr(dns, "qd", None)
+            qd = qd_field[0] if (qd_field is not None and hasattr(qd_field, "__getitem__") and len(qd_field) > 0) else qd_field
+            if qd:
+                qtype = _dns_qtype_name(_safe(qd, "qtype"))
+                qname_raw = _safe(qd, "qname")
                 qname = (qname_raw.decode("utf-8", errors="replace").rstrip(".")
                          if isinstance(qname_raw, bytes) else str(qname_raw).rstrip("."))
         except Exception:

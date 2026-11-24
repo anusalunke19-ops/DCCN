@@ -481,6 +481,7 @@ def render_live_capture_page():
             if clicked_idx < len(table_df):
                 selected_frame_num = int(table_df.iloc[clicked_idx]["No."])
                 st.session_state["selected_packet_idx"] = selected_frame_num - 1
+                st.session_state["live_frame_select_dropdown"] = selected_frame_num
 
     # -----------------------------------------------------------------------
     # Section 4: Packet Selection & Export Toolbar
@@ -501,16 +502,22 @@ def render_live_capture_page():
 
             sel_col1, sel_col2 = st.columns([2.5, 1.5])
             with sel_col1:
+                if st.session_state.get("live_frame_select_dropdown") not in available_nums:
+                    st.session_state["live_frame_select_dropdown"] = available_nums[default_index]
+
+                def _on_live_dropdown_change():
+                    ch = st.session_state.get("live_frame_select_dropdown")
+                    if ch is not None:
+                        st.session_state["selected_packet_idx"] = ch - 1
+
                 selected_num = st.selectbox(
                     "Selected Frame",
                     options=available_nums,
-                    index=default_index,
                     format_func=lambda n: f"Frame #{n:03d} | {df[df['num'] == n]['protocol'].values[0]} | {df[df['num'] == n]['src_ip'].values[0]} → {df[df['num'] == n]['dst_ip'].values[0]}",
                     key="live_frame_select_dropdown",
-                    label_visibility="collapsed"
+                    label_visibility="collapsed",
+                    on_change=_on_live_dropdown_change
                 )
-                if selected_num - 1 != curr_selected:
-                    st.session_state["selected_packet_idx"] = selected_num - 1
 
             with sel_col2:
                 if st.button("🔬 Open in Packet Inspector", type="primary", use_container_width=True, key="live_goto_inspector_btn"):

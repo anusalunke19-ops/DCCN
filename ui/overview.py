@@ -227,7 +227,7 @@ def render_overview_page():
     with c2:
         st.markdown("<span style='font-family: JetBrains Mono; font-size: 0.8rem; font-weight: 700; color: #263238;'>TRAFFIC OVER TIME</span>", unsafe_allow_html=True)
         timeline_df = analyze_traffic_timeline(df, bins=25)
-        if not timeline_df.empty:
+        if not timeline_df.empty and "bin_mid" in timeline_df.columns:
             fig_t = go.Figure()
             fig_t.add_trace(go.Bar(
                 x=timeline_df["bin_mid"],

@@ -444,8 +444,8 @@ def render_packet_analysis_page():
             clicked_row_idx = selected_rows[0]
             if 0 <= clicked_row_idx < len(table_df):
                 clicked_frame_num = int(table_df.iloc[clicked_row_idx]["No."])
-                if clicked_frame_num - 1 != st.session_state.get("selected_packet_idx"):
-                    st.session_state["selected_packet_idx"] = clicked_frame_num - 1
+                st.session_state["selected_packet_idx"] = clicked_frame_num - 1
+                st.session_state["analysis_frame_selector"] = clicked_frame_num
 
     curr_selected_idx = st.session_state.get("selected_packet_idx", 0)
     if curr_selected_idx is None or curr_selected_idx < 0 or curr_selected_idx >= len(parsed_packets):
@@ -456,19 +456,25 @@ def render_packet_analysis_page():
     if default_sel_num not in available_nums:
         default_sel_num = available_nums[0]
         st.session_state["selected_packet_idx"] = default_sel_num - 1
+        st.session_state["analysis_frame_selector"] = default_sel_num
 
     sel_col1, sel_col2, sel_col3 = st.columns([2.5, 1.2, 1.3])
     with sel_col1:
+        if st.session_state.get("analysis_frame_selector") not in available_nums:
+            st.session_state["analysis_frame_selector"] = default_sel_num
+
+        def _on_analysis_frame_change():
+            ch = st.session_state.get("analysis_frame_selector")
+            if ch is not None:
+                st.session_state["selected_packet_idx"] = ch - 1
+
         chosen_num = st.selectbox(
             "Selected Frame for Dissection",
             options=available_nums,
-            index=available_nums.index(default_sel_num),
             format_func=lambda n: f"Frame #{n:03d} | {df[df['num'] == n]['protocol'].values[0]} | {df[df['num'] == n]['src_ip'].values[0]} → {df[df['num'] == n]['dst_ip'].values[0]} ({df[df['num'] == n]['length'].values[0]} Bytes)",
-            key="analysis_frame_selector"
+            key="analysis_frame_selector",
+            on_change=_on_analysis_frame_change
         )
-        if chosen_num - 1 != curr_selected_idx:
-            st.session_state["selected_packet_idx"] = chosen_num - 1
-            st.rerun()
 
     active_idx = chosen_num - 1
     active_parsed = parsed_packets[active_idx]

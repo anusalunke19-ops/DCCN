@@ -270,30 +270,42 @@ def render_packet_inspector_page():
 
     total_pkts = len(parsed_packets)
 
+    if "insp_jump_frame_select" not in st.session_state or st.session_state["insp_jump_frame_select"] != curr_idx + 1:
+        st.session_state["insp_jump_frame_select"] = curr_idx + 1
+
+    def _on_prev_frame():
+        if st.session_state.get("selected_packet_idx", 0) > 0:
+            st.session_state["selected_packet_idx"] -= 1
+            st.session_state["insp_jump_frame_select"] = st.session_state["selected_packet_idx"] + 1
+
+    def _on_next_frame():
+        curr = st.session_state.get("selected_packet_idx", 0)
+        if curr < total_pkts - 1:
+            st.session_state["selected_packet_idx"] = curr + 1
+            st.session_state["insp_jump_frame_select"] = st.session_state["selected_packet_idx"] + 1
+
+    def _on_jump_frame_change():
+        chosen = st.session_state.get("insp_jump_frame_select")
+        if chosen is not None:
+            st.session_state["selected_packet_idx"] = chosen - 1
+
     nav1, nav2, nav3, nav4 = st.columns([1, 2.8, 1, 2.2])
 
     with nav1:
-        if st.button("⬅ PREV FRAME", key="insp_nav_prev_btn", disabled=(curr_idx <= 0), use_container_width=True):
-            st.session_state["selected_packet_idx"] = curr_idx - 1
-            st.rerun()
+        st.button("⬅ PREV FRAME", key="insp_nav_prev_btn", disabled=(curr_idx <= 0), use_container_width=True, on_click=_on_prev_frame)
 
     with nav2:
-        selected_num = st.selectbox(
+        st.selectbox(
             "Jump to Frame",
             options=range(1, total_pkts + 1),
-            index=curr_idx,
             format_func=lambda n: f"Frame #{n:03d} — {parsed_packets[n-1]['protocol']} ({parsed_packets[n-1]['length']} Bytes)",
             label_visibility="collapsed",
-            key="insp_jump_frame_select"
+            key="insp_jump_frame_select",
+            on_change=_on_jump_frame_change
         )
-        if selected_num - 1 != curr_idx:
-            st.session_state["selected_packet_idx"] = selected_num - 1
-            st.rerun()
 
     with nav3:
-        if st.button("NEXT FRAME ➡", key="insp_nav_next_btn", disabled=(curr_idx >= total_pkts - 1), use_container_width=True):
-            st.session_state["selected_packet_idx"] = curr_idx + 1
-            st.rerun()
+        st.button("NEXT FRAME ➡", key="insp_nav_next_btn", disabled=(curr_idx >= total_pkts - 1), use_container_width=True, on_click=_on_next_frame)
 
     with nav4:
         st.markdown(

@@ -152,6 +152,9 @@ def analyze_flow(flow_key: str, packets: List[Dict[str, Any]]) -> Dict[str, Any]
     server_isn = None
     syn_time = None
     syn_ack_time = None
+    syn_pkt = None
+    syn_ack_pkt = None
+    final_ack_pkt = None
 
     c2s_packets = 0
     s2c_packets = 0
@@ -231,6 +234,7 @@ def analyze_flow(flow_key: str, packets: List[Dict[str, Any]]) -> Dict[str, Any]
             if syn_time is None:
                 syn_time = ts
                 client_isn = seq
+                syn_pkt = pkt
             events.append({
                 "time": ts,
                 "direction": dir_arrow,
@@ -246,6 +250,7 @@ def analyze_flow(flow_key: str, packets: List[Dict[str, Any]]) -> Dict[str, Any]
             if syn_ack_time is None:
                 syn_ack_time = ts
                 server_isn = seq
+                syn_ack_pkt = pkt
             events.append({
                 "time": ts,
                 "direction": dir_arrow,
@@ -300,6 +305,7 @@ def analyze_flow(flow_key: str, packets: List[Dict[str, Any]]) -> Dict[str, Any]
             # Check for Handshake Final ACK (Step 3)
             if has_syn and has_syn_ack and not has_final_ack and is_c2s:
                 has_final_ack = True
+                final_ack_pkt = pkt
                 events.append({
                     "time": ts,
                     "direction": dir_arrow,
@@ -419,6 +425,9 @@ def analyze_flow(flow_key: str, packets: List[Dict[str, Any]]) -> Dict[str, Any]
         "duplicate_acks": duplicate_ack_count,
         "client_isn": client_isn,
         "server_isn": server_isn,
+        "syn_pkt": syn_pkt,
+        "syn_ack_pkt": syn_ack_pkt,
+        "final_ack_pkt": final_ack_pkt,
         "events": events,
     }
 

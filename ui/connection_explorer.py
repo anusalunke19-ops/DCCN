@@ -302,64 +302,225 @@ def render_connection_explorer_page():
     # Handshake Reconstruction Graphic
     # -----------------------------------------------------------------------
     st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+    # -----------------------------------------------------------------------
+    # Visual TCP 3-Way Handshake Exchange Cards (Interactive & Dynamic)
+    # -----------------------------------------------------------------------
+    st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
     if selected_flow.get("has_syn"):
+        syn_pkt = selected_flow.get("syn_pkt") or {}
+        syn_ack_pkt = selected_flow.get("syn_ack_pkt") or {}
+        final_ack_pkt = selected_flow.get("final_ack_pkt") or {}
+
+        client_isn = selected_flow.get("client_isn")
+        server_isn = selected_flow.get("server_isn")
+        syn_ack_present = selected_flow.get("has_syn_ack", False)
+        final_ack_present = selected_flow.get("has_final_ack", False)
+        has_rst = selected_flow.get("has_rst", False)
+
+        # Status badge for the overall handshake
+        if final_ack_present:
+            hs_badge = '<span class="soc-badge soc-badge-green">● 3-WAY HANDSHAKE ESTABLISHED</span>'
+            hs_desc = "Full 3-way handshake verified: bidirectional initial sequence numbers synchronized and acknowledged."
+        elif syn_ack_present:
+            hs_badge = '<span class="soc-badge soc-badge-amber">⚠ HALF-OPEN (MISSING FINAL ACK)</span>'
+            hs_desc = "Client sent SYN and received SYN-ACK, but never transmitted the final ACK. Connection remained half-open."
+        elif has_rst:
+            hs_badge = '<span class="soc-badge" style="background-color: #FEE2E2; color: #DC2626; border: 1px solid #FECACA;">✕ CONNECTION REFUSED (RST)</span>'
+            hs_desc = "Client sent SYN, but the server immediately aborted with RST. The target port is closed or firewalled."
+        else:
+            hs_badge = '<span class="soc-badge soc-badge-amber">○ UNANSWERED SYN PROBE</span>'
+            hs_desc = "Client transmitted initial SYN, but no response was captured from the server (timed out or dropped)."
+
         st.markdown(
-            """
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; font-weight: 700; color: #159A91; margin-bottom: 8px;">
-                // TCP THREE-WAY HANDSHAKE RECONSTRUCTION:
+            f"""
+            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 6px; padding: 14px 18px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; font-weight: 700; color: #159A91;">
+                        // VISUAL TCP 3-WAY HANDSHAKE EXCHANGE
+                    </span>
+                    {hs_badge}
+                </div>
+                <div style="font-size: 0.82rem; color: #64748B;">
+                    {hs_desc}
+                </div>
             </div>
             """,
             unsafe_allow_html=True
         )
+
         h_col1, h_col2, h_col3 = st.columns(3)
 
-        client_isn = selected_flow.get("client_isn", "N/A")
-        server_isn = selected_flow.get("server_isn", "N/A")
-
+        # Card 1: SYN
+        syn_num = syn_pkt.get("num", "?")
+        syn_win = syn_pkt.get("tcp_window", "N/A")
         with h_col1:
             st.markdown(
                 f"""
-                <div style="background: #FFFFFF; border: 1px solid #E5E9EF; border-left: 3px solid #159A91; padding: 12px 14px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">
-                    <div style="font-size: 0.72rem; color: #159A91; font-weight: 700;">STEP 1: CLIENT SYN [ACTIVE OPEN]</div>
-                    <div style="font-size: 0.85rem; color: #263238; font-weight: 600; margin: 4px 0;">Initiate Socket Connection</div>
-                    <div style="font-size: 0.75rem; color: #718096;">Client ISN: <b style="color: #159A91;">{client_isn}</b></div>
-                    <div style="font-size: 0.72rem; color: #94A3B8; margin-top: 4px;">Synchronizes sequence number and advertises TCP options.</div>
+                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-top: 3px solid #159A91; border-radius: 6px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); height: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; font-weight: 700; color: #159A91;">
+                            1. SYN (STEP 1)
+                        </span>
+                        <span class="soc-badge soc-badge-teal">FRAME #{syn_num}</span>
+                    </div>
+                    <div style="font-size: 0.78rem; font-weight: 600; color: #263238; margin-bottom: 8px;">
+                        Client ➔ Server [Active Open]
+                    </div>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 4px; padding: 8px 10px; margin-bottom: 8px; line-height: 1.6; color: #1E293B;">
+                        <div>Flags: <b style="color: #159A91;">[SYN]</b></div>
+                        <div>Seq:   <b>{client_isn}</b> <span style="color: #64748B;">(ISN_c)</span></div>
+                        <div>Ack:   <span style="color: #64748B;">0 (None)</span></div>
+                        <div>Win:   <b>{syn_win}</b> <span style="color: #64748B;">bytes</span></div>
+                    </div>
+                    <div style="font-size: 0.73rem; color: #64748B; line-height: 1.45;">
+                        Client initiates connection, advertises its Initial Sequence Number (<b style="color: #263238;">ISN_c</b>), and specifies its receive buffer capacity.
+                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
 
+        # Card 2: SYN-ACK
         with h_col2:
-            syn_ack_present = selected_flow.get("has_syn_ack", False)
-            syn_ack_border = "#059669" if syn_ack_present else "#DC2626"
-            syn_ack_title = "STEP 2: SERVER SYN-ACK [ACKNOWLEDGED]" if syn_ack_present else "STEP 2: NO SYN-ACK OBSERVED [DROPPED/REFUSED]"
-            st.markdown(
-                f"""
-                <div style="background: #FFFFFF; border: 1px solid #E5E9EF; border-left: 3px solid {syn_ack_border}; padding: 12px 14px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">
-                    <div style="font-size: 0.72rem; color: {syn_ack_border}; font-weight: 700;">{syn_ack_title}</div>
-                    <div style="font-size: 0.85rem; color: #263238; font-weight: 600; margin: 4px 0;">Synchronize & Confirm</div>
-                    <div style="font-size: 0.75rem; color: #718096;">Server ISN: <b style="color: #059669;">{server_isn}</b> | iRTT: <b>{f"{rtt} ms" if rtt else "N/A"}</b></div>
-                    <div style="font-size: 0.72rem; color: #94A3B8; margin-top: 4px;">{"Server confirmed client ISN+1" if syn_ack_present else "Server did not acknowledge SYN request."}</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            if syn_ack_present:
+                sa_num = syn_ack_pkt.get("num", "?")
+                sa_ack = syn_ack_pkt.get("tcp_ack", "N/A")
+                sa_win = syn_ack_pkt.get("tcp_window", "N/A")
+                rtt_str = f"Δ +{rtt} ms" if rtt is not None else ""
+                ack_matches = (sa_ack == client_isn + 1) if (isinstance(sa_ack, int) and isinstance(client_isn, int)) else False
+                ack_check_html = '<span style="color: #059669; font-weight: 700;">✓ ISN_c + 1 verified</span>' if ack_matches else ""
+                st.markdown(
+                    f"""
+                    <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-top: 3px solid #059669; border-radius: 6px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); height: 100%;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; font-weight: 700; color: #059669;">
+                                2. SYN-ACK (STEP 2)
+                            </span>
+                            <span class="soc-badge soc-badge-green">FRAME #{sa_num} {rtt_str}</span>
+                        </div>
+                        <div style="font-size: 0.78rem; font-weight: 600; color: #263238; margin-bottom: 8px;">
+                            Server ➔ Client [Acknowledge & Sync]
+                        </div>
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 4px; padding: 8px 10px; margin-bottom: 8px; line-height: 1.6; color: #1E293B;">
+                            <div>Flags: <b style="color: #059669;">[SYN, ACK]</b></div>
+                            <div>Seq:   <b>{server_isn}</b> <span style="color: #64748B;">(ISN_s)</span></div>
+                            <div>Ack:   <b>{sa_ack}</b> {ack_check_html}</div>
+                            <div>Win:   <b>{sa_win}</b> <span style="color: #64748B;">bytes</span></div>
+                        </div>
+                        <div style="font-size: 0.73rem; color: #64748B; line-height: 1.45;">
+                            Server agrees to socket connection, confirms client ISN (<b style="color: #263238;">Ack = ISN_c + 1</b>), and sends its own synchronized sequence number (<b style="color: #263238;">ISN_s</b>).
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+            elif has_rst:
+                st.markdown(
+                    """
+                    <div style="background: #FFF5F5; border: 1px solid #FED7D7; border-top: 3px solid #DC2626; border-radius: 6px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); height: 100%;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; font-weight: 700; color: #DC2626;">
+                                2. RST REJECTED
+                            </span>
+                            <span class="soc-badge" style="background-color: #FEE2E2; color: #DC2626;">REFUSED</span>
+                        </div>
+                        <div style="font-size: 0.78rem; font-weight: 600; color: #991B1B; margin-bottom: 8px;">
+                            Server ➔ Client [Reset Connection]
+                        </div>
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; background: #FFFFFF; border: 1px solid #FECACA; border-radius: 4px; padding: 8px 10px; margin-bottom: 8px; line-height: 1.6; color: #7F1D1D;">
+                            <div>Flags: <b>[RST]</b> or <b>[RST, ACK]</b></div>
+                            <div>Status: Destination Port Closed</div>
+                        </div>
+                        <div style="font-size: 0.73rem; color: #7F1D1D; line-height: 1.45;">
+                            The server active operating system or intermediate firewall rejected the connection request immediately.
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+            else:
+                st.markdown(
+                    """
+                    <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-top: 3px solid #D97706; border-radius: 6px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); height: 100%;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; font-weight: 700; color: #D97706;">
+                                2. MISSING SYN-ACK
+                            </span>
+                            <span class="soc-badge soc-badge-amber">TIMEOUT</span>
+                        </div>
+                        <div style="font-size: 0.78rem; font-weight: 600; color: #92400E; margin-bottom: 8px;">
+                            Server ➔ Client [No Response]
+                        </div>
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; background: #FFFFFF; border: 1px solid #FDE68A; border-radius: 4px; padding: 8px 10px; margin-bottom: 8px; line-height: 1.6; color: #78350F;">
+                            <div>Status: SYN-ACK Unobserved</div>
+                            <div>Cause: Packet Drop / Firewall</div>
+                        </div>
+                        <div style="font-size: 0.73rem; color: #78350F; line-height: 1.45;">
+                            No return SYN-ACK frame was captured. Either the host is unreachable or a firewall silently discarded the SYN packet.
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
+        # Card 3: Final ACK
         with h_col3:
-            final_ack_present = selected_flow.get("has_final_ack", False)
-            ack_border = "#059669" if final_ack_present else ("#D97706" if syn_ack_present else "#94A3B8")
-            ack_title = "STEP 3: CLIENT ACK [ESTABLISHED]" if final_ack_present else "STEP 3: MISSING FINAL ACK"
-            st.markdown(
-                f"""
-                <div style="background: #FFFFFF; border: 1px solid #E5E9EF; border-left: 3px solid {ack_border}; padding: 12px 14px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">
-                    <div style="font-size: 0.72rem; color: {ack_border}; font-weight: 700;">{ack_title}</div>
-                    <div style="font-size: 0.85rem; color: #263238; font-weight: 600; margin: 4px 0;">Handshake Completed</div>
-                    <div style="font-size: 0.75rem; color: #718096;">Status: <b style="color: {ack_border};">{"ESTABLISHED" if final_ack_present else "INCOMPLETE"}</b></div>
-                    <div style="font-size: 0.72rem; color: #94A3B8; margin-top: 4px;">{"Socket transitioned to ESTABLISHED state; ready for payload." if final_ack_present else "Client failed to send final ACK confirming server ISN+1."}</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            if final_ack_present:
+                fa_num = final_ack_pkt.get("num", "?")
+                fa_seq = final_ack_pkt.get("tcp_seq", "N/A")
+                fa_ack = final_ack_pkt.get("tcp_ack", "N/A")
+                fa_win = final_ack_pkt.get("tcp_window", "N/A")
+                ack_matches = (fa_ack == server_isn + 1) if (isinstance(fa_ack, int) and isinstance(server_isn, int)) else False
+                ack_check_html = '<span style="color: #059669; font-weight: 700;">✓ ISN_s + 1 verified</span>' if ack_matches else ""
+                st.markdown(
+                    f"""
+                    <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-top: 3px solid #059669; border-radius: 6px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); height: 100%;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; font-weight: 700; color: #059669;">
+                                3. ACK (STEP 3)
+                            </span>
+                            <span class="soc-badge soc-badge-green">FRAME #{fa_num}</span>
+                        </div>
+                        <div style="font-size: 0.78rem; font-weight: 600; color: #263238; margin-bottom: 8px;">
+                            Client ➔ Server [Established]
+                        </div>
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 4px; padding: 8px 10px; margin-bottom: 8px; line-height: 1.6; color: #1E293B;">
+                            <div>Flags: <b style="color: #059669;">[ACK]</b></div>
+                            <div>Seq:   <b>{fa_seq}</b></div>
+                            <div>Ack:   <b>{fa_ack}</b> {ack_check_html}</div>
+                            <div>Win:   <b>{fa_win}</b> <span style="color: #64748B;">bytes</span></div>
+                        </div>
+                        <div style="font-size: 0.73rem; color: #64748B; line-height: 1.45;">
+                            Client confirms server ISN (<b style="color: #263238;">Ack = ISN_s + 1</b>). Connection state transitions to <b style="color: #059669;">ESTABLISHED</b>; bidirectional data transfer can begin.
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+            else:
+                st.markdown(
+                    """
+                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-top: 3px solid #94A3B8; border-radius: 6px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); height: 100%;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; font-weight: 700; color: #64748B;">
+                                3. FINAL ACK
+                            </span>
+                            <span class="soc-badge soc-badge-amber">INCOMPLETE</span>
+                        </div>
+                        <div style="font-size: 0.78rem; font-weight: 600; color: #475569; margin-bottom: 8px;">
+                            Client ➔ Server [Unconfirmed]
+                        </div>
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 4px; padding: 8px 10px; margin-bottom: 8px; line-height: 1.6; color: #64748B;">
+                            <div>Status: Missing Final ACK</div>
+                            <div>State: Half-Open / Dropped</div>
+                        </div>
+                        <div style="font-size: 0.73rem; color: #64748B; line-height: 1.45;">
+                            Client did not transmit the final ACK segment. The socket never reached established state.
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
     else:
         st.markdown(
             """

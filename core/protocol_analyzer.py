@@ -129,7 +129,8 @@ def analyze_traffic_timeline(df: pd.DataFrame, bins: int = 25) -> pd.DataFrame:
     valid_ts = df["timestamp"].dropna()
     min_t, max_t = valid_ts.min(), valid_ts.max()
     if min_t == max_t:
-        return pd.DataFrame([{"time_bin": 0.0, "packet_count": len(df), "byte_volume": df["length"].sum()}])
+        bytes_total = df["length"].sum() if "length" in df.columns else 0
+        return pd.DataFrame([{"time_bin": 0.0, "bin_mid": 0.0, "packet_count": len(df), "byte_volume": bytes_total}])
 
     df_copy = df[df["timestamp"].notna()].copy()
     df_copy["time_rel"] = df_copy["timestamp"] - min_t
@@ -137,8 +138,10 @@ def analyze_traffic_timeline(df: pd.DataFrame, bins: int = 25) -> pd.DataFrame:
     df_copy["bin"] = pd.cut(df_copy["time_rel"], bins=bins)
     grouped = df_copy.groupby("bin", observed=False).agg(
         packet_count=("num", "count"),
-        byte_volume=("length", "sum")
+        byte_volume=("length", "sum") if "length" in df_copy.columns else ("num", "count")
     ).reset_index()
 
     grouped["bin_mid"] = grouped["bin"].apply(lambda b: round(b.mid, 3) if hasattr(b, 'mid') else 0)
+    if "time_bin" not in grouped.columns:
+        grouped["time_bin"] = grouped["bin_mid"]
     return grouped
