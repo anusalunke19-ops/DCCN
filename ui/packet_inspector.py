@@ -38,18 +38,12 @@ def _render_layer_highlight_badges(highlights: Dict[str, str], color: str):
     badge_html_items = []
     for field_name, field_val in highlights.items():
         badge_html_items.append(
-            f"""
-            <div style="background: #F8FAFC; border: 1px solid #E5E9EF; border-left: 2px solid {color}; border-radius: 4px; padding: 6px 12px; margin: 3px; display: inline-flex; flex-direction: column;">
-                <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #718096; text-transform: uppercase; letter-spacing: 0.05em;">{field_name}</span>
-                <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.86rem; font-weight: 700; color: #263238; word-break: break-all;">{field_val}</span>
-            </div>
-            """
+            f'<div style="background: #F8FAFC; border: 1px solid #E5E9EF; border-left: 2px solid {color}; border-radius: 4px; padding: 6px 12px; margin: 3px; display: inline-flex; flex-direction: column;">'
+            f'<span style="font-family: \'JetBrains Mono\', monospace; font-size: 0.68rem; color: #718096; text-transform: uppercase; letter-spacing: 0.05em;">{field_name}</span>'
+            f'<span style="font-family: \'JetBrains Mono\', monospace; font-size: 0.86rem; font-weight: 700; color: #263238; word-break: break-all;">{field_val}</span>'
+            f'</div>'
         )
-    return f"""
-    <div style="display: flex; flex-wrap: wrap; gap: 4px; margin: 10px 0 14px 0;">
-        {''.join(badge_html_items)}
-    </div>
-    """
+    return f'<div style="display: flex; flex-wrap: wrap; gap: 4px; margin: 10px 0 14px 0;">{"".join(badge_html_items)}</div>'
 
 
 def _render_encapsulation_diagram(layers: List[Dict[str, Any]], total_wire_bytes: int):
@@ -96,18 +90,18 @@ def _render_encapsulation_diagram(layers: List[Dict[str, Any]], total_wire_bytes
     boxes_html = ""
     for idx, al in enumerate(annotated_layers):
         pad_indent = idx * 10
-        boxes_html += f"""
-        <div style="margin-left: {pad_indent}px; margin-top: 8px; background: #FFFFFF; border: 1px solid #E5E9EF; border-left: 4px solid {al['color']}; border-radius: 6px; padding: 10px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-                <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; color: #263238;">
-                    {al['icon']} {al['name']} &nbsp;
-                    <span style="font-size: 0.72rem; color: #718096; font-weight: 500;">[{al['osi']}]</span>
-                </span>
-                <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #263238; background: #F8FAFC; border: 1px solid #E5E9EF; padding: 2px 8px; border-radius: 4px;">
-                    {al['pdu'].upper()}: {al['size']}B ({al['range']})
-                </span>
-            </div>
-        """
+        boxes_html += (
+            f'<div style="margin-left: {pad_indent}px; margin-top: 8px; background: #FFFFFF; border: 1px solid #E5E9EF; border-left: 4px solid {al["color"]}; border-radius: 6px; padding: 10px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">'
+            f'<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">'
+            f'<span style="font-family: \'JetBrains Mono\', monospace; font-size: 0.85rem; font-weight: 700; color: #263238;">'
+            f'{al["icon"]} {al["name"]} &nbsp;'
+            f'<span style="font-size: 0.72rem; color: #718096; font-weight: 500;">[{al["osi"]}]</span>'
+            f'</span>'
+            f'<span style="font-family: \'JetBrains Mono\', monospace; font-size: 0.75rem; color: #263238; background: #F8FAFC; border: 1px solid #E5E9EF; padding: 2px 8px; border-radius: 4px;">'
+            f'{al["pdu"].upper()}: {al["size"]}B ({al["range"]})'
+            f'</span>'
+            f'</div>'
+        )
 
     for _ in range(len(annotated_layers)):
         boxes_html += "</div>"
