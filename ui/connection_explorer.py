@@ -59,7 +59,6 @@ def _apply_light_plotly_layout(fig, height=280):
 def _navigate(page):
     """Navigate to a workspace page with radio sync."""
     st.session_state["current_page"] = page
-    st.session_state["sidebar_workspace_radio"] = page
     st.rerun()
 
 

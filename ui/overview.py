@@ -29,7 +29,6 @@ from ui.guided_lab import render_contextual_help
 def _navigate(page: str):
     """Safely navigate to another workspace, synchronizing sidebar and top-nav."""
     st.session_state["current_page"] = page
-    st.session_state["sidebar_workspace_radio"] = page
     st.rerun()
 
 

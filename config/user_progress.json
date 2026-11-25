@@ -1,11 +1,7 @@
 {
-  "completed_tutorials": [
-    "tut_4"
-  ],
+  "completed_tutorials": [],
   "completed_experiments": [],
-  "quiz_scores": {
-    "tut_4": 0
-  },
-  "created_at": "2026-11-23T16:22:21.830086",
-  "last_updated": "2026-11-23T16:38:44.769268"
+  "quiz_scores": {},
+  "created_at": "2026-11-25T08:10:28.591628",
+  "last_updated": "2026-11-25T08:10:28.591732"
 }

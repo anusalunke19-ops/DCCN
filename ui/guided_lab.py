@@ -26,7 +26,6 @@ from core.pcap_manager import load_pcap
 def _navigate(page: str):
     """Safely switch workspace and ensure all sidebar and top-nav state stays synchronized."""
     st.session_state["current_page"] = page
-    st.session_state["sidebar_workspace_radio"] = page
     st.rerun()
 
 

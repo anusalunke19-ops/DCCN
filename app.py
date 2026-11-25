@@ -551,7 +551,6 @@ WORKSPACE_PAGES = [
 def navigate_to(page: str):
     """Safely switch workspace and ensure all sidebar and top-nav state stays synchronized."""
     st.session_state["current_page"] = page
-    st.session_state["sidebar_workspace_radio"] = page
     st.rerun()
 
 
@@ -586,13 +585,22 @@ def render_top_navigation(current_page: str):
     </div>
     """, unsafe_allow_html=True)
 
+    def _on_top_nav_click(target_page: str):
+        st.session_state["current_page"] = target_page
+        st.session_state["sidebar_workspace_radio"] = target_page
+
     cols = st.columns(len(WORKSPACE_PAGES))
     for i, p in enumerate(WORKSPACE_PAGES):
         is_active = (p == current_page)
         btn_type = "primary" if is_active else "secondary"
-        if cols[i].button(p, key=f"top_nav_item_{i}", type=btn_type, use_container_width=True):
-            if p != current_page:
-                navigate_to(p)
+        cols[i].button(
+            p,
+            key=f"top_nav_item_{i}",
+            type=btn_type,
+            use_container_width=True,
+            on_click=_on_top_nav_click,
+            args=(p,)
+        )
 
 
 # ---------------------------------------------------------------------------
