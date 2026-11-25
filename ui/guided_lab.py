@@ -384,21 +384,14 @@ def render_guided_lab_page():
 
         # Tutorial Steps
         for step in active_tut["steps"]:
-            st.markdown(
-                f"""
-                <div style="background: #F8FAFC; border: 1px solid #E5E9EF; border-radius: 6px; padding: 16px; margin-bottom: 14px;">
-                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 700; color: #159A91; margin-bottom: 8px;">
-                        {step['title']}
-                    </div>
-                    <div style="font-size: 0.86rem; color: #263238; line-height: 1.6;">
-                        {step['content']}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-            if "diagram" in step:
-                st.code(step["diagram"].strip(), language="text")
+            with st.container(border=True):
+                st.markdown(
+                    f"<div style=\"font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 700; color: #159A91; margin-bottom: 8px;\">{step['title']}</div>",
+                    unsafe_allow_html=True
+                )
+                st.markdown(step["content"].strip())
+                if "diagram" in step:
+                    st.code(step["diagram"].strip(), language="text")
 
         # Knowledge Check Quiz
         st.divider()
